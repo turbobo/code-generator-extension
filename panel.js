@@ -36,8 +36,9 @@
   var historyEmpty = document.getElementById('historyEmpty');
   var clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
-  // ===== 安全检测 storage 是否可用 =====
-  var hasStorage = !!(typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local);
+  // ===== 安全检测 chrome API 是否可用 =====
+  var hasStorage = false;
+  try { hasStorage = !!(chrome && chrome.storage && chrome.storage.local && chrome.runtime && chrome.runtime.id); } catch (e) {}
 
   // ===== 状态持久化 =====
   function saveState() {
@@ -297,7 +298,7 @@
     if (!hasStorage) { renderHistory(); return; }
     try {
       chrome.storage.local.get(STORAGE_KEY, function (result) {
-        if (chrome.runtime.lastError) { renderHistory(); return; }
+        try { if (chrome.runtime.lastError) { renderHistory(); return; } } catch (e) { renderHistory(); return; }
         historyData = (result && result[STORAGE_KEY]) || [];
         renderHistory();
       });
@@ -515,8 +516,11 @@
   var pinSwitch = document.getElementById('pinSwitch');
   if (pinSwitch) {
     pinSwitch.addEventListener('click', function () {
-      // 保存偏好，所有标签页通过 storage.onChanged 自动响应
-      chrome.runtime.sendMessage({ action: 'setPinMode', pinned: false });
+      try {
+        chrome.runtime.sendMessage({ action: 'setPinMode', pinned: false });
+      } catch (e) {
+        console.warn('扩展已失效，请刷新页面');
+      }
     });
   }
 })();
