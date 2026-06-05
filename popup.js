@@ -208,8 +208,12 @@
     var dlBtn = document.createElement('button');
     dlBtn.className = 'download-btn';
     dlBtn.textContent = '下载';
-    dlBtn.addEventListener('click', function () { downloadSingle(item, text, index); });
+    dlBtn.addEventListener('click', function (e) { e.stopPropagation(); downloadSingle(item, text, index); });
     item.appendChild(dlBtn);
+
+    // 点击放大
+    item.style.cursor = 'pointer';
+    item.addEventListener('click', function () { showZoom(item, text); });
 
     return item;
   }
@@ -459,5 +463,52 @@
   function hideError() {
     errorMsg.classList.remove('show');
     errorMsg.textContent = '';
+  }
+
+  // ===== 点击放大 =====
+  var zoomOverlay = document.getElementById('zoomOverlay');
+  var zoomContent = document.getElementById('zoomContent');
+  var zoomClose = document.getElementById('zoomClose');
+
+  function showZoom(codeElement, text) {
+    zoomContent.innerHTML = '';
+    // 重新生成一个大号的码
+    if (currentType === 'qrcode') {
+      var qrDiv = document.createElement('div');
+      zoomContent.appendChild(qrDiv);
+      new QRCode(qrDiv, {
+        text: text,
+        width: 280,
+        height: 280,
+        colorDark: '#333333',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    } else {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      try {
+        JsBarcode(svg, text, { format: barcodeFormat.value, width: 4, height: 200, displayValue: true, fontSize: 20, margin: 15 });
+      } catch (e) {
+        JsBarcode(svg, text, { format: 'CODE128', width: 4, height: 200, displayValue: true, fontSize: 20, margin: 15 });
+      }
+      zoomContent.appendChild(svg);
+    }
+    var label = document.createElement('div');
+    label.className = 'zoom-label';
+    label.textContent = text;
+    zoomContent.appendChild(label);
+    zoomOverlay.classList.add('show');
+  }
+
+  function hideZoom() {
+    zoomOverlay.classList.remove('show');
+    zoomContent.innerHTML = '';
+  }
+
+  if (zoomClose) zoomClose.addEventListener('click', function (e) { e.stopPropagation(); hideZoom(); });
+  if (zoomOverlay) {
+    zoomOverlay.addEventListener('click', function (e) {
+      if (e.target === zoomOverlay) hideZoom();
+    });
   }
 })();
