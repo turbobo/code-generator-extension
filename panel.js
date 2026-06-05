@@ -227,24 +227,25 @@
         correctLevel: QRCode.CorrectLevel.M
       });
     } else {
+      item.className = 'code-item code-item-wide';
       var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       try {
         JsBarcode(svg, text, {
           format: barcodeFormat.value,
           width: 3,
-          height: 100,
-          displayValue: text.length <= 20,
-          fontSize: 16,
-          margin: 10
+          height: 160,
+          displayValue: true,
+          fontSize: 18,
+          margin: 12
         });
       } catch (e) {
         JsBarcode(svg, text, {
           format: 'CODE128',
           width: 3,
-          height: 100,
-          displayValue: text.length <= 20,
-          fontSize: 16,
-          margin: 10
+          height: 160,
+          displayValue: true,
+          fontSize: 18,
+          margin: 12
         });
       }
       item.appendChild(svg);
