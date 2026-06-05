@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 14px 16px;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .header h1 {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    /* Pin Toggle Switch */
+    .pin-switch {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pin-switch-track {
+      width: 36px;
+      height: 20px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.25);
+      position: relative;
+      transition: background 0.3s;
+    }
+    .pin-switch.on .pin-switch-track {
+      background: #4cd964;
+    }
+    .pin-switch-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .pin-switch.on .pin-switch-thumb {
+      left: 18px;
+    }
+    .pin-switch-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+      white-space: nowrap;
+    }
+    .pin-switch.on .pin-switch-label {
+      color: #fff;
+    }
+
+    /* Toggle Switch */
+    .toggle-group {
+      display: flex;
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .toggle-btn {
+      flex: 1;
+      padding: 7px 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      transition: all 0.2s;
+    }
+    .toggle-btn.active {
+      background: rgba(255,255,255,0.95);
+      color: #764ba2;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* Barcode type selector */
+    .barcode-options { display: none; margin-top: 8px; }
+    .barcode-options.show { display: flex; }
+    .barcode-options select {
+      flex: 1;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(255,255,255,0.9);
+      color: #333;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Content */
+    .content { padding: 14px 16px; }
+
+    .input-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .input-label .hint { color: #999; font-size: 11px; }
+
+    textarea {
+      width: 100%;
+      height: 90px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: "SF Mono", "Menlo", monospace;
+    }
+    textarea:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+    }
+    textarea::placeholder { color: #bbb; }
+
+    .actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn {
+      flex: 1;
+      padding: 9px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-secondary {
+      background: #fff;
+      color: #666;
+      border: 1px solid #ddd;
+    }
+    .btn-secondary:hover { background: #f5f5f5; }
+
+    /* Results */
+    .results { margin-top: 14px; display: none; }
+    .results.show { display: block; }
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .results-header h3 { font-size: 13px; color: #333; }
+    .results-header .count {
+      font-size: 11px;
+      color: #999;
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      max-height: 55vh;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .code-grid::-webkit-scrollbar { width: 4px; }
+    .code-grid::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+    .code-item {
+      background: white;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #eee;
+      transition: box-shadow 0.2s;
+    }
+    .code-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .code-item canvas, .code-item img, .code-item svg { max-width: 100%; height: auto; }
+    .code-item .code-text {
+      font-size: 11px;
+      color: #666;
+      margin-top: 5px;
+      word-break: break-all;
+      line-height: 1.3;
+      max-height: 2.6em;
+      overflow: hidden;
+    }
+    .code-item .download-btn {
+      display: inline-block;
+      margin-top: 5px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: #667eea;
+      border: 1px solid #667eea;
+      border-radius: 4px;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.2s;
+    }
+    .code-item .download-btn:hover { background: #667eea; color: white; }
+
+    .batch-download { margin-top: 8px; text-align: center; }
+    .batch-download .btn { width: 100%; }
+
+    .error-msg { color: #e74c3c; font-size: 12px; margin-top: 6px; display: none; }
+    .error-msg.show { display: block; }
+
+    .empty-state { text-align: center; padding: 24px 16px; color: #bbb; }
+    .empty-state .icon { font-size: 32px; margin-bottom: 6px; }
+    .empty-state p { font-size: 12px; }
+
+    /* Tab Bar */
+    .tab-bar {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: #999;
+      background: none;
+      border: none;
+      cursor: pointer;
+      position: relative;
+    }
+    .tab-btn.active { color: #764ba2; }
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 20%;
+      width: 60%;
+      height: 2px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 1px;
+    }
+    .tab-btn:hover { color: #666; }
+    .tab-badge {
+      display: inline-block;
+      min-width: 16px;
+      height: 16px;
+      line-height: 16px;
+      padding: 0 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #fff;
+      background: #e74c3c;
+      border-radius: 8px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .tab-panel { display: none; }
+
+    /* History */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .history-count { font-size: 12px; color: #999; }
+    .btn-link {
+      font-size: 12px;
+      color: #e74c3c;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .btn-link:hover { background: #fef2f2; }
+
+    .history-list { max-height: 55vh; overflow-y: auto; padding-right: 4px; }
+    .history-list::-webkit-scrollbar { width: 4px; }
+    .history-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+    .history-item {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      border: 1px solid #eee;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .history-item:hover { border-color: #667eea; box-shadow: 0 2px 8px rgba(102,126,234,0.1); }
+    .history-item-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .history-type { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; color: #fff; }
+    .history-type.qr { background: #667eea; }
+    .history-type.bar { background: #e67e22; }
+    .history-time { font-size: 11px; color: #bbb; }
+    .history-texts { font-size: 12px; color: #555; line-height: 1.5; word-break: break-all; }
+    .history-texts .text-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-texts .more { color: #999; font-size: 11px; }
+    .history-delete {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: #ccc;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.15s;
+    }
+    .history-item:hover .history-delete { opacity: 1; }
+    .history-delete:hover { background: #fef2f2; color: #e74c3c; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-top">
+      <h1>批量码生成器</h1>
+      <div class="pin-switch on" id="pinSwitch" title="关闭后回到弹窗模式">
+        <span class="pin-switch-label">钉住</span>
+        <div class="pin-switch-track"><div class="pin-switch-thumb"></div></div>
+      </div>
+    </div>
+    <div class="toggle-group">
+      <button class="toggle-btn active" data-type="qrcode">二维码</button>
+      <button class="toggle-btn" data-type="barcode">条形码</button>
+    </div>
+    <div class="barcode-options" id="barcodeOptions">
+      <select id="barcodeFormat">
+        <option value="CODE128">CODE 128（通用）</option>
+        <option value="EAN13">EAN-13（商品）</option>
+        <option value="EAN8">EAN-8</option>
+        <option value="UPC">UPC-A</option>
+        <option value="CODE39">CODE 39</option>
+        <option value="ITF14">ITF-14</option>
+        <option value="pharmacode">Pharmacode</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="generate">生成</button>
+    <button class="tab-btn" data-tab="history">
+      历史记录
+      <span class="tab-badge" id="historyBadge" style="display:none"></span>
+    </button>
+  </div>
+
+  <div class="content tab-panel" id="tabGenerate" style="display:block">
+    <div class="input-label">
+      <span>输入内容</span>
+      <span class="hint">粘贴或输入后自动生成</span>
+    </div>
+    <textarea id="inputText" placeholder="每行输入一个内容"></textarea>
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="actions">
+      <button class="btn btn-primary" id="generateBtn">生成</button>
+      <button class="btn btn-secondary" id="clearBtn">清空</button>
+    </div>
+    <div class="results" id="results">
+      <div class="results-header">
+        <h3>生成结果</h3>
+        <span class="count" id="resultCount"></span>
+      </div>
+      <div class="code-grid" id="codeGrid"></div>
+      <div class="batch-download">
+        <button class="btn btn-primary" id="downloadAllBtn">全部下载</button>
+      </div>
+    </div>
+    <div class="empty-state" id="emptyState">
+      <div class="icon">📱</div>
+      <p>输入内容后点击生成</p>
+    </div>
+  </div>
+
+  <div class="content tab-panel" id="tabHistory">
+    <div class="history-header">
+      <span class="history-count" id="historyCount">0 条记录</span>
+      <button class="btn-link" id="clearHistoryBtn">清空历史</button>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="empty-state" id="historyEmpty">
+        <div class="icon">📋</div>
+        <p>还没有生成记录</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="lib/qrcode.min.js"></script>
+  <script src="lib/JsBarcode.all.min.js"></script>
+  <script src="panel.js"></script>
+</body>
+</html>
